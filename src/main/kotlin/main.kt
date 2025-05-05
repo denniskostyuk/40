@@ -344,30 +344,42 @@ class ChatService(
         return false
     }
 
-    fun checkUserName(name: String): Boolean {     //проверяем, а есть ли юзер с таким именем?
-        if (users.find { it.name == name } != null) {
-            return true
-        } else {
-            return false
-        }
+//    fun checkUserName(name: String): Boolean {     //проверяем, а есть ли юзер с таким именем?
+//        if (users.find { it.name == name } != null) {
+//            return true
+//        } else {
+//            return false
+//        }
+//    }
+
+    fun checkUserName(name: String): Boolean {     //проверяем, а есть ли юзер с таким именем? ("улучшайзинг" функции)
+        return users.find { it.name == name } != null
     }
 
-    fun checkUserId(id: Int): Boolean {     //проверяем, а есть ли такой юзер с таким id?
-        if (users.find { it.id == id } != null) {
-            return true
-        } else {
-            return false
-        }
+//    fun checkUserId(id: Int): Boolean {     //проверяем, а есть ли такой юзер с таким id?
+//        if (users.find { it.id == id } != null) {
+//            return true
+//        } else {
+//            return false
+//        }
+//    }
+
+    fun checkUserId(id: Int): Boolean {     //проверяем, а есть ли такой юзер с таким id? ("улучшайзинг" функции)
+        return users.find { it.id == id } != null
     }
 
-    fun getMaxUsersId(): Int {                  //Получаем максимальный ID пользователя
-        var maxId = 0;
-        for (user in users) {
-            if (user.id > maxId) {
-                maxId = user.id
-            }
-        }
-        return maxId
+//    fun getMaxUsersId(): Int {                  //Получаем максимальный ID пользователя ==> переделали с требованием ДЗ по теме Sequences
+//        var maxId = 0;
+//        for (user in users) {
+//            if (user.id > maxId) {
+//                maxId = user.id
+//            }
+//        }
+//        return maxId
+//    }
+
+    fun getMaxUsersId(): Int {                  //Получаем максимальный ID пользователя с учетом требований ДЗ по теме Sequences
+        return users.maxOfOrNull { it.id } ?: 0
     }
 
 //    fun getUserNameById(id: Int): String {              // Получаем имя пользователя по id пользователя ==> переделали с использованием lambda-функции
@@ -404,14 +416,18 @@ class ChatService(
         messages.add(message)
     }
 
-    fun getMaxMessageId(): Int {                //Получаем максимальный ID сообщения
-        var maxId = 0;
-        for (mess in messages) {
-            if (mess.id > maxId) {
-                maxId = mess.id
-            }
-        }
-        return maxId
+//    fun getMaxMessageId(): Int {                //Получаем максимальный ID сообщения ==> переделали с требованием ДЗ по теме Sequences
+//        var maxId = 0;
+//        for (mess in messages) {
+//            if (mess.id > maxId) {
+//                maxId = mess.id
+//            }
+//        }
+//        return maxId
+//    }
+
+    fun getMaxMessageId(): Int {                //Получаем максимальный ID сообщения с учетом требований ДЗ по теме Sequences
+        return messages.maxOfOrNull { it.id } ?: 0
     }
 
 //    fun setMessageReadByMessageId (id: Int) {      // устанавливаем сообщения "прочитанными"  ==> переделали через Extension Functions
@@ -431,16 +447,31 @@ class ChatService(
 //        }
 //    }
 
-    fun chatListByUserID(id: Int): List<Users?> {
+//    fun chatListByUserID(id: Int): List<Users?> {        // получаем список "контактов" по ID юзера ==> переделали с требованием ДЗ по теме Sequences
+//        var list = mutableListOf<Users?>()
+//        messages.forEach { mess ->
+//            if ((mess.userFromId == id)) {
+//                list.add(getUserById(mess.userToId))
+//            }
+//            if ((mess.userToId == id)) {
+//                list.add(getUserById(mess.userFromId))
+//            }
+//        }
+//        return list.distinct()
+//    }
+
+    fun chatListByUserID(id: Int): List<Users?> {        // получаем список "контактов" по ID юзера с учетом требований ДЗ по теме Sequences
+
         var list = mutableListOf<Users?>()
-        messages.forEach { mess ->
-            if ((mess.userFromId == id)) {
-                list.add(getUserById(mess.userToId))
-            }
-            if ((mess.userToId == id)) {
-                list.add(getUserById(mess.userFromId))
-            }
-        }
+
+        messages.filter { it.userFromId == id }
+                .map { it.userToId }
+                .forEach { list.add(getUserById(it)) }
+
+        messages.filter { it.userToId == id }
+                .map { it.userFromId }
+                .forEach { list.add(getUserById(it)) }
+
         return list.distinct()
     }
 
@@ -467,14 +498,21 @@ class ChatService(
         return list
     }
 
-    fun allMessagesByUserId(myUserId: Int): List<Message?> {   // выводим все сообщения одного пользователя (отправленные ему или от него)
-        var list = mutableListOf<Message?>()
-        messages.forEach { mess ->
-            if (mess.userFromId == myUserId || mess.userToId == myUserId) {
-                list.add(mess)
-            }
-        }
-        list.sortBy { it?.id }
+//    fun allMessagesByUserId(myUserId: Int): List<Message?> {   // выводим все сообщения одного пользователя (отправленные ему или от него) ==> переделали с требованием ДЗ по теме Sequences
+//        var list = mutableListOf<Message?>()
+//        messages.forEach { mess ->
+//            if (mess.userFromId == myUserId || mess.userToId == myUserId) {
+//                list.add(mess)
+//            }
+//        }
+//        list.sortBy { it?.id }
+//        return list
+//    }
+
+    fun allMessagesByUserId(myUserId: Int): List<Message?> {   // выводим все сообщения одного пользователя (отправленные ему или от него) с учетом требований ДЗ по теме Sequences
+        var list = messages.filter { it.userFromId == myUserId || it.userToId == myUserId }
+                           .sortedBy { it.id }
+
         return list
     }
 
